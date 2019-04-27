@@ -15,7 +15,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torchvision.transforms as T
 from torch.autograd import Variable
-from tensorboardX import SummaryWriter
+# from tensorboardX import SummaryWriter
 
 import pdb
 from skimage.transform import resize
@@ -26,6 +26,7 @@ import time
 import os
 
 
+RENDER = False
 EVN = 'SpaceInvaders-v0'
 EPISODE = 1000000
 BATCH_SIZE = 128
@@ -138,6 +139,8 @@ class DQN:
         # This is merged based on the mask, such that we'll have either the expected
         # state value or 0 in case the state was final.
         next_state_values = torch.zeros(self.batch_size)
+        if use_cuda:
+            next_state_values = next_state_values.cuda()
         next_state_values[non_final_mask] = self.target_net(non_final_next_states).max(1)[0].detach()
         # Compute the expected Q values
         expected_state_action_values = (next_state_values * GAMMA) + reward_batch
@@ -156,6 +159,7 @@ class DQN:
 class Agent:
     def __init__(self):
         self.env = gym.make(EVN)
+        self.render = RENDER
         self.dpn = DQN()
 
         self.steps = 0
@@ -185,7 +189,10 @@ class Agent:
         state = FloatTensor(state)
         if random.random() > epsilon:
             actions_value = self.dpn.policy_net.forward(state)
-            action = torch.max(actions_value, 1)[1].data.numpy()[0]
+            if use_cuda:
+                action = torch.max(actions_value, 1)[1].cpu().data.numpy()[0]
+            else:
+                action = torch.max(actions_value, 1)[1].data.numpy()[0]
         else:
             action = random.randint(0, self.env.action_space.n - 1)
         return action
@@ -272,7 +279,8 @@ class Agent:
         total_reward = 0
 
         while True:
-            self.env.render()
+            if self.render:
+                self.env.render()
             action = self.select_action([state], train)
             observation, reward, done, info = self.env.step(action)
 
@@ -338,7 +346,8 @@ class Agent:
         print("-"*50)
 
     def close(self):
-        self.env.render(close=True)
+        if self.render:
+            self.env.render(close=True)
         self.env.close()
 
 
