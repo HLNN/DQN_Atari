@@ -26,7 +26,7 @@ import time
 import os
 
 
-RENDER = False
+RENDER = True
 EVN = 'SpaceInvaders-v0'
 EPISODE = 1000000
 BATCH_SIZE = 128
@@ -200,8 +200,12 @@ class Agent:
     def burn_memory(self):
         if os.path.exists('model.pkl'):
             print('Find existing model, starting loading...')
-            self.dpn.policy_net.load_state_dict(torch.load('model.pkl'))
-            self.dpn.target_net.load_state_dict(torch.load('model.pkl'))
+            if use_cuda:
+                self.dpn.policy_net.load_state_dict(torch.load('model.pkl', map_location='gpu'))
+                self.dpn.target_net.load_state_dict(torch.load('model.pkl', map_location='gpu'))
+            else:
+                self.dpn.policy_net.load_state_dict(torch.load('model.pkl', map_location='cpu'))
+                self.dpn.target_net.load_state_dict(torch.load('model.pkl', map_location='cpu'))
             print('Model loaded, ready to start training now')
             return
 
