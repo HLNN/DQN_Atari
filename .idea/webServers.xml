@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="e2d76967-7435-4fc9-8ac8-a08af5f4301a" name="JHN" url="http://115.154.245.182">
+        <fileTransfer host="115.154.245.182" port="12254" rootFolder="/home/amax/HLN" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+          <option name="port" value="12254" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

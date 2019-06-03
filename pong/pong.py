@@ -26,8 +26,8 @@ import time
 import os
 
 
-RENDER = True
-EVN = 'Breakout-v0'
+RENDER = False
+EVN = 'Pong-v0'
 EPISODE = 1000000
 BATCH_SIZE = 128
 GAMMA = 0.9
@@ -40,6 +40,13 @@ TARGET_UPDATE = 10
 LR = 0.0001
 
 
+e = gym.make(EVN)
+o = e.reset()
+o = o[34:-16, :]
+cv2.imshow('', o)
+cv2.waitKey()
+
+
 # if gpu is to be used
 use_cuda = torch.cuda.is_available()
 FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
@@ -48,8 +55,9 @@ ByteTensor = torch.cuda.ByteTensor if use_cuda else torch.ByteTensor
 
 
 class CNN(nn.Module):
-    def __init__(self):
+    def __init__(self, action_n):
         super(CNN, self).__init__()
+        self.action_n = action_n
 
         self.conv1 = nn.Sequential(
             nn.Conv2d(4, 16, 8, 4),
@@ -63,7 +71,7 @@ class CNN(nn.Module):
             nn.Linear(9 * 9 * 32, 256),
             nn.ReLU()
         )
-        self.fc2 = nn.Linear(256, 6)
+        self.fc2 = nn.Linear(256, self.action_n)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -98,8 +106,9 @@ class ReplayMemory(object):
 
 
 class DQN:
-    def __init__(self):
-        self.policy_net, self.target_net = CNN(), CNN()
+    def __init__(self, action_n):
+        self.action_n = action_n
+        self.policy_net, self.target_net = CNN(self.action_n), CNN(self.action_n)
 
         if use_cuda:
             self.policy_net.cuda()
@@ -159,8 +168,9 @@ class DQN:
 class Agent:
     def __init__(self):
         self.env = gym.make(EVN)
+        self.action_n = self.env.action_space.n
         self.render = RENDER
-        self.dpn = DQN()
+        self.dpn = DQN(self.action_n)
 
         self.steps = 0
 
@@ -201,8 +211,8 @@ class Agent:
         if os.path.exists('model.pkl'):
             print('Find existing model, starting loading...')
             if use_cuda:
-                self.dpn.policy_net.load_state_dict(torch.load('model.pkl', map_location='gpu'))
-                self.dpn.target_net.load_state_dict(torch.load('model.pkl', map_location='gpu'))
+                self.dpn.policy_net.load_state_dict(torch.load('model.pkl'))
+                self.dpn.target_net.load_state_dict(torch.load('model.pkl'))
             else:
                 self.dpn.policy_net.load_state_dict(torch.load('model.pkl', map_location='cpu'))
                 self.dpn.target_net.load_state_dict(torch.load('model.pkl', map_location='cpu'))
@@ -369,7 +379,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-e = gym.make(EVN)
-print(e.action_space.n)
